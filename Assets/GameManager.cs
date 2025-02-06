@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour {
 
     public struct Particle {
+        public int id;
         public Vector2 position;
         public Vector2 velocity;
         public int type;
@@ -21,9 +22,15 @@ public class GameManager : MonoBehaviour {
     public GameObject board;
 
     Particle[] particles;
-    List<Matrix4x4>[] meshMatrices;
+    List<Matrix4x4>[] meshPositions;
     Mesh particleMesh;
     public Material[] materials;
+
+    List<Particle>[,] grid;
+
+    int dimension = 10, gridDim;
+
+    int gridx,gridy;
 
     DynamicLayout matrixUI;
     float[,] matrix;
@@ -31,20 +38,30 @@ public class GameManager : MonoBehaviour {
 
         particleMesh =  Resources.GetBuiltinResource<Mesh>("Quad.fbx");
         Vector2 size = GetComponent<Renderer>().bounds.size; 
-        meshMatrices = new List<Matrix4x4>[typeCount];
+        meshPositions = new List<Matrix4x4>[typeCount];
         particles = new Particle[particleCount];
+        gridDim = (int)(dimension/radius);
+        grid = new List<Particle>[gridDim,gridDim];
 
-        for (int i = 0; i < typeCount; i++) 
-            meshMatrices[i] = new List<Matrix4x4>(); 
+        for(int i = 0 ;i < (int) (dimension/radius); i++){
+            for(int j = 0; j < (int) (dimension/radius); j++)
+                grid[i,j] = new List<Particle>();
+            
+        }
+
+        for (int i = 0; i < typeCount; i++) {
+            meshPositions[i] = new List<Matrix4x4>(); 
+        }
         
 
         for(int i = 0; i<particleCount; i++) {
             Particle p = new Particle();
-            p.position = new Vector2(Random.Range(-0.5f, 0.5f) * size.x, Random.Range(-0.5f, 0.5f) * size.y);
+            p.id = i;
+            p.position = new Vector2(Random.Range(0f, 1f) * dimension, Random.Range(0f, 1f) * dimension);
             p.velocity = Vector2.zero;
             p.type = Random.Range(0, typeCount);
             particles[i] = p;
-
+            grid[(int) (p.position.y/radius),(int)(p.position.x/radius)].Add(p);
         }
 
         matrix = new float[typeCount,typeCount];
@@ -58,6 +75,7 @@ public class GameManager : MonoBehaviour {
                 board.transform.GetChild(i+1).GetChild(j+1).gameObject.GetComponent<Image>().color = Color.HSVToRGB(matrix[i,j]<0 ? 0 : 120f/355f,1,Mathf.Abs(matrix[i,j]));
             }
         }
+
     }
 
     void Update(){
@@ -71,23 +89,49 @@ public class GameManager : MonoBehaviour {
         }
 
         for(int i = 0; i<typeCount; i++)
-            meshMatrices[i].Clear();
+            meshPositions[i].Clear();
         
+        // for(int r = 0; r<gridDim; r++) {
+        //     for(int c = 0; c<gridDim; c++){
+        //         for(int p1 = 0; p1<grid[r,c].Count; p1++){           //each particle in current grid box
+        //             grid[rc][p1].velocity *= friction;
+
+        //             for(int i = -1; i<=1; i++){             
+        //                 for(int j = -1; j<=1; j++){         //9 grid boxes around current grid box
+        //                     gridx = (r+i)%gridDim;
+        //                     gridy = (c+j)%gridDim;
+
+        //                     foreach(Particle p2 in grid[gridx,gridy]){
+        //                         if(p1.id==p2.id)continue;
+                                
+        //                     }
+
+        //                 }
+        //             }
+
+        //         }
+
+        //     }
+        // }
+
         for(int i = 0; i<particleCount; i++){
             particles[i].velocity *= friction;
+            
             for(int j = 0; j<particleCount; j++){
                 if(i==j)continue;
                 particles[i].velocity+= forceMultiplier(particles[i],particles[j]) * Time.deltaTime;
             }
+            grid[(int) (particles[i].position.y/radius),(int)(particles[i].position.x/radius)].Remove(particles[i]);
             particles[i].position += particles[i].velocity * Time.deltaTime;
+            grid[(int) (particles[i].position.y/radius),(int)(particles[i].position.x/radius)].Add(particles[i]);
 
-            //screen wrapping
-            if(particles[i].position.x < -8.82f) particles[i].position.x = 8.82f;
-            else if (particles[i].position.x > 8.82f) particles[i].position.x = -8.82f;
-            if(particles[i].position.y < -4.98f) particles[i].position.y = 4.98f;
-            else if(particles[i].position.y > 4.98f) particles[i].position.y = -4.98f;
+            // screen wrapping
+            if(particles[i].position.x < 0) particles[i].position.x = dimension;
+            else if (particles[i].position.x > dimension) particles[i].position.x = 0;
+            if(particles[i].position.y < 0) particles[i].position.y = dimension;
+            else if(particles[i].position.y > dimension) particles[i].position.y = 0;
 
-            meshMatrices[particles[i].type].Add(
+            meshPositions[particles[i].type].Add(
                 Matrix4x4.TRS(particles[i].position, Quaternion.identity, Vector3.one * particleSize)
             );
         }
@@ -97,10 +141,10 @@ public class GameManager : MonoBehaviour {
 
     void render() {
         for(int i = 0; i<typeCount; i++){
-            int batchSize = meshMatrices[i].Count;
+            int batchSize = meshPositions[i].Count;
 
             for(int j = 0; j< batchSize; j+=1023) {
-                Graphics.DrawMeshInstanced(particleMesh, 0, materials[i], meshMatrices[i].ToArray(), Mathf.Min(1023, batchSize - j));
+                Graphics.DrawMeshInstanced(particleMesh, 0, materials[i], meshPositions[i].ToArray(), Mathf.Min(1023, batchSize - j));
             }
         }
     }
@@ -113,11 +157,11 @@ public class GameManager : MonoBehaviour {
 
     public Vector2 forceMultiplier(Particle p1, Particle p2){
         float force = 1;
-        Vector2 delta = (p2.position - p1.position);
+        Vector2 delta = p2.position - p1.position;
         Vector2 direction = (p2.position - p1.position).normalized;
         float distance = Vector2.Distance(p1.position, p2.position);
         if(distance>radius) {
-            if (Mathf.Abs(delta.x) > transform.localScale.x/ 2)
+            if (Mathf.Abs(delta.x) > transform.localScale.x / 2)
                 delta.x -= Mathf.Sign(delta.x) * transform.localScale.x;
 
             if (Mathf.Abs(delta.y) > transform.localScale.y / 2)
