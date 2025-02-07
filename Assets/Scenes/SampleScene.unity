@@ -523,13 +523,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1334d986040fd641bec646e9e35ebac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 2
-  tooCloseR: 0.3
-  forceScale: 10
+  radius: 2.5
+  tooCloseR: 1.5
+  forceScale: 12
   friction: 0.1
   typeCount: 5
   particleCount: 1000
-  particleSize: 0.05
+  particleSize: 0.1
   board: {fileID: 908083663}
   materials:
   - {fileID: 2100000, guid: 892d792bd6a06b94aa912e520227754d, type: 2}
@@ -598,9 +598,9 @@ Transform:
   m_GameObject: {fileID: 1889515020}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 0}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 519420032}
   m_Father: {fileID: 0}
