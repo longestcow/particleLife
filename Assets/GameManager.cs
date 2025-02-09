@@ -9,11 +9,19 @@ using System.Collections.Concurrent;
 
 public class GameManager : MonoBehaviour {
     
-    public float radius, tooCloseR;
+
+    // can change mid sim
+    public float tooCloseR;
     public float forceScale, friction;
+    public float particleSize = 0.05f;
+    float[,] matrix;
+
+    // cant change mid sim
+    public int dimension;
+    public float radius;
     public int typeCount;
     public int particleCount;
-    public float particleSize = 0.05f;
+
     public GameObject board;
 
     Particle[] particles;
@@ -24,7 +32,7 @@ public class GameManager : MonoBehaviour {
 
     List<Particle>[,] grid;
 
-    int dimension, gridDim;
+    int gridDim;
     Matrix4x4[] matrixBuffer = new Matrix4x4[1023];
 
     int gridx,gridy;
@@ -33,11 +41,11 @@ public class GameManager : MonoBehaviour {
     ConcurrentBag<Matrix4x4>[] meshPositionsConcurrent;
 
     DynamicLayout matrixUI;
-    float[,] matrix;
 
     void Start() {
+        
         meshPositionsConcurrent = new ConcurrentBag<Matrix4x4>[typeCount];
-        dimension = (int)transform.localScale.x;
+        transform.localScale = new Vector2(dimension, dimension);
         transform.position = new Vector2(dimension/2, dimension/2);
         renderParams = new RenderParams[typeCount];
         particleMesh =  Resources.GetBuiltinResource<Mesh>("Quad.fbx");
@@ -218,6 +226,7 @@ public class GameManager : MonoBehaviour {
         Vector2 delta = p2.position - p1.position;
         Vector2 direction = (p2.position - p1.position).normalized;
         float distance = Vector2.Distance(p1.position, p2.position);
+        // if(radius==tooCloseR)return Vector2.zero; // edging goated
         if(distance>radius) {
             if (Mathf.Abs(delta.x) > dimension / 2)
                 delta.x -= Mathf.Sign(delta.x) * dimension;
@@ -229,7 +238,7 @@ public class GameManager : MonoBehaviour {
             direction = delta.normalized;
             if(distance>radius)return Vector2.zero;
         }
-        if(distance<tooCloseR) return mapfloat(distance,  0, tooCloseR, -1, 0) * direction * forceScale; 
+        if(distance<=tooCloseR) return mapfloat(distance,  0, tooCloseR, -1, 0) * direction * forceScale; 
         else if(distance<=tooCloseR+((radius-tooCloseR)/2)) force = mapfloat(distance, tooCloseR, tooCloseR+((radius-tooCloseR)/2), 0, 1);
         else force = mapfloat(distance,  tooCloseR+((radius-tooCloseR)/2), radius, 1, 0);
         force*=matrix[p2.type, p1.type]; 
