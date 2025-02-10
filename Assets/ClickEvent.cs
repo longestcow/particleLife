@@ -6,10 +6,10 @@ using UnityEngine.EventSystems;
 
 public class ClickEvent : MonoBehaviour, IPointerDownHandler
 {
-    GameManager manager;
+    DynamicLayout manager;
     void Start()
     {
-       manager = GameObject.Find("GameManager").GetComponent<GameManager>(); 
+       manager = GameObject.Find("Canvas").GetComponent<DynamicLayout>(); 
     }
     public virtual void OnPointerDown(PointerEventData eventData){
         int y = transform.GetSiblingIndex();

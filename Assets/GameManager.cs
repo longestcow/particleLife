@@ -10,25 +10,18 @@ using System.Collections.Concurrent;
 public class GameManager : MonoBehaviour {
     
 
-    // can change mid sim
-    public float tooCloseR;
-    public float forceScale, friction;
-    public float particleSize = 0.05f;
-    float[,] matrix;
-
     // cant change mid sim
-    public int dimension;
-    public float radius;
-    public int typeCount;
-    public int particleCount;
+    int dimension;
+    float radius;
+    int typeCount;
+    int particleCount;
 
-    public GameObject board;
 
     Particle[] particles;
     List<Matrix4x4>[] meshPositions;
     Mesh particleMesh;
     public Material[] materials;
-    public RenderParams[] renderParams;
+    RenderParams[] renderParams;
 
     List<Particle>[,] grid;
 
@@ -43,13 +36,18 @@ public class GameManager : MonoBehaviour {
     DynamicLayout matrixUI;
 
     void Start() {
+        matrixUI = GameObject.Find("Canvas").GetComponent<DynamicLayout>();
+
+        dimension = matrixUI.dimension;
+        radius = matrixUI.radius;
+        typeCount = matrixUI.typeCount;
+        particleCount = matrixUI.particleCount;
         
         meshPositionsConcurrent = new ConcurrentBag<Matrix4x4>[typeCount];
         transform.localScale = new Vector2(dimension, dimension);
         transform.position = new Vector2(dimension/2, dimension/2);
         renderParams = new RenderParams[typeCount];
         particleMesh =  Resources.GetBuiltinResource<Mesh>("Quad.fbx");
-        Vector2 size = GetComponent<Renderer>().bounds.size; 
         meshPositions = new List<Matrix4x4>[typeCount];
         particles = new Particle[particleCount];
         gridDim = (int)(dimension/radius); //how many boxes
@@ -81,18 +79,7 @@ public class GameManager : MonoBehaviour {
             grid[(int) (p.position.y/radius),(int)(p.position.x/radius)].Add(p);
         }
 
-        matrix = new float[typeCount,typeCount];
-        matrixUI = GameObject.Find("Canvas").GetComponent<DynamicLayout>();
 
-        matrixUI.createBoard(typeCount+1);
-
-        for(int i = 0; i<typeCount; i++){
-            for(int j = 0; j < typeCount; j++){
-                matrix[i,j] = Random.Range(-1f, 1f);
-                // matrix[i,j]=0;
-                board.transform.GetChild(i+1).GetChild(j+1).gameObject.GetComponent<Image>().color = Color.HSVToRGB(matrix[i,j]<0 ? 0 : 120f/355f,1,Mathf.Abs(matrix[i,j]));
-            }
-        }
 
     }
 
@@ -108,22 +95,6 @@ public class GameManager : MonoBehaviour {
         }
         else pPressed = false;
 
-        if(Input.GetKey(KeyCode.R)){
-            for(int i = 0; i<typeCount; i++){
-                for(int j = 0; j < typeCount; j++){
-                    matrix[i,j] = Random.Range(-1f, 1f);
-                    board.transform.GetChild(i+1).GetChild(j+1).gameObject.GetComponent<Image>().color = Color.HSVToRGB(matrix[i,j]<0 ? 0 : 120f/355f,1,Mathf.Abs(matrix[i,j]));
-                }
-            }
-        }
-        else if(Input.GetKey(KeyCode.E)){
-            for(int i = 0; i<typeCount; i++){
-                for(int j = 0; j < typeCount; j++){
-                    matrix[i,j] = 0;
-                    board.transform.GetChild(i+1).GetChild(j+1).gameObject.GetComponent<Image>().color = new Color(0,0,0,0);
-                }
-            }
-        }
 
         for(int i = 0; i<typeCount; i++){
             meshPositions[i].Clear();
@@ -131,7 +102,7 @@ public class GameManager : MonoBehaviour {
         }
         
         Parallel.For(0, particles.Length, i=>{
-            particles[i].velocity *=friction;
+            particles[i].velocity *= matrixUI.friction;
         
             for(int offi = -1; offi<=1; offi++){
                 for(int offj = -1; offj<=1; offj++){
@@ -152,50 +123,19 @@ public class GameManager : MonoBehaviour {
             else if(particles[i].position.y >= dimension) particles[i].position.y = 0;
 
             meshPositionsConcurrent[particles[i].type].Add(
-                Matrix4x4.TRS(particles[i].position, Quaternion.identity, Vector3.one * particleSize)
+                Matrix4x4.TRS(particles[i].position, Quaternion.identity, Vector3.one * matrixUI.particleSize)
             );
 
         });
 
-        // Parallel.For(0, gridDim, r=> {
-        //     for(int c = 0; c<gridDim; c++){
-        //         foreach(Particle p1 in grid[r,c]){           //each particle in current grid box
-        //             p1.velocity *= friction;
-        //             for(int i = -1; i<=1; i++){             
-        //                 for(int j = -1; j<=1; j++){         //9 grid boxes around current grid box
-        //                     gridx = (int)nfmod((r+i),gridDim);
-        //                     gridy = (int)nfmod((c+j),gridDim);
-        //                     foreach(Particle p2 in grid[gridx,gridy]){
-        //                         if(p1.id==p2.id)continue;
-        //                         p1.velocity+= forceMultiplier(p1,p2) * 0.02f;
-        //                     }
-        //                 }
-        //             }
-
-        //             p1.position += p1.velocity * 0.02f;
-
-
-        //             if(p1.position.x < 0) p1.position.x = dimension-0.1f;
-        //             else if (p1.position.x >= dimension) p1.position.x = 0;
-        //             if(p1.position.y < 0) p1.position.y = dimension-0.1f;
-        //             else if(p1.position.y >= dimension) p1.position.y = 0;
-                   
-        //             meshPositionsConcurrent[p1.type].Add(
-        //                 Matrix4x4.TRS(p1.position, Quaternion.identity, Vector3.one * particleSize)
-        //             );
-        //         }
-
-        //     }
-        // });
         for(int i = 0 ;i < gridDim; i++){
             for(int j = 0; j < gridDim; j++)
                 grid[i,j].Clear();
-            
         }
 
-        for(int i = 0; i<particleCount; i++){
+        for(int i = 0; i<particleCount; i++)
             grid[Mathf.Clamp((int)(particles[i].position.y/radius), 0, gridDim-1), Mathf.Clamp((int)(particles[i].position.x/radius), 0, gridDim-1)].Add(particles[i]);
-        }
+        
 
         for (int i = 0; i < typeCount; i++)
             meshPositions[i] = new List<Matrix4x4>(meshPositionsConcurrent[i]);
@@ -215,18 +155,13 @@ public class GameManager : MonoBehaviour {
         }
     }
 
-    public void updateMatrix(int x, int y, bool neg, GameObject gameObj){
-        matrix[x,y]+= 0.2f * (neg ? -1 : 1);
-        matrix[x,y]=Mathf.Clamp(matrix[x,y],-1,1);
-        gameObj.GetComponent<Image>().color = Color.HSVToRGB(matrix[x,y]<0 ? 0 : 120f/355f,1,Mathf.Abs(matrix[x,y]));
-    }
+
 
     Vector2 forceMultiplier(Particle p1, Particle p2){
         float force = 1;
         Vector2 delta = p2.position - p1.position;
         Vector2 direction = (p2.position - p1.position).normalized;
         float distance = Vector2.Distance(p1.position, p2.position);
-        // if(radius==tooCloseR)return Vector2.zero; // edging goated
         if(distance>radius) {
             if (Mathf.Abs(delta.x) > dimension / 2)
                 delta.x -= Mathf.Sign(delta.x) * dimension;
@@ -238,11 +173,11 @@ public class GameManager : MonoBehaviour {
             direction = delta.normalized;
             if(distance>radius)return Vector2.zero;
         }
-        if(distance<=tooCloseR) return mapfloat(distance,  0, tooCloseR, -1, 0) * direction * forceScale; 
-        else if(distance<=tooCloseR+((radius-tooCloseR)/2)) force = mapfloat(distance, tooCloseR, tooCloseR+((radius-tooCloseR)/2), 0, 1);
-        else force = mapfloat(distance,  tooCloseR+((radius-tooCloseR)/2), radius, 1, 0);
-        force*=matrix[p2.type, p1.type]; 
-        return force * direction * forceScale;
+        if(distance<=matrixUI.tooCloseR && matrixUI.tooCloseR!=0) return mapfloat(distance,  0, matrixUI.tooCloseR, -1, 0) * direction * matrixUI.forceScale; 
+        else if(distance<=matrixUI.tooCloseR+((radius-matrixUI.tooCloseR)/2)) force = mapfloat(distance, matrixUI.tooCloseR, matrixUI.tooCloseR+((radius-matrixUI.tooCloseR)/2), 0, 1);
+        else force = mapfloat(distance,  matrixUI.tooCloseR+((radius-matrixUI.tooCloseR)/2), radius, 1, 0);
+        force*=matrixUI.matrix[p2.type, p1.type]; 
+        return force * direction * matrixUI.forceScale;
         
         
     }
