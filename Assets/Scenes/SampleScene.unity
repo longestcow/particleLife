@@ -3735,11 +3735,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f87d0fd72a8a6440b5e2fa61cc681f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dimension: 30
-  radius: 3
-  typeCount: 5
-  particleCount: 3000
-  tooCloseR: 1
+  dimension: 10
+  radius: 1
+  typeCount: 3
+  particleCount: 300
+  tooCloseR: 0.3
   forceScale: 10
   friction: 0.1
   particleSize: 0.09

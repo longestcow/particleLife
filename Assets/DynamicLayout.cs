@@ -50,13 +50,13 @@ public class DynamicLayout : MonoBehaviour
     public static int selfCount = 0;
 
     void Start(){
-        print(deci.IsMatch("1.8"));
         if(selfCount != 0){
             Destroy(gameObject);
             return;
         }
         DontDestroyOnLoad(gameObject);
         manager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        typeCount = manager.materials.Length;
 
         matrix = new float[typeCount,typeCount];
         createBoard(typeCount+1, false);
