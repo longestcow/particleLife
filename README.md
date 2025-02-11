@@ -13,4 +13,4 @@ finally, i just called it a day and slapped on multithreaded processing. this wa
 
 since the project relies on parallel processing and stuff, it doesnt run on the browser very well. i think its really fun to play around with and would suggest people to download and run the exe to play with it.  
   
-[build](https://github.com/longestcow/particleLife/releases/tag/v1.0) [main code](https://github.com/longestcow/particleLife/blob/main/Assets/GameManager.cs) 
+[build](https://github.com/longestcow/particleLife/releases/tag/v1.0)       [main code](https://github.com/longestcow/particleLife/blob/main/Assets/GameManager.cs) 
