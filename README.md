@@ -1,4 +1,11 @@
 # particle life  
+  
+https://github.com/user-attachments/assets/9a576852-5d98-4e78-bd77-303032eb7185
+  
+https://github.com/user-attachments/assets/0fe727e4-cd2e-4ae0-8b69-bd602dda7627
+
+12 more minutes of me playing around with the sim - https://drive.google.com/file/d/1G0Uw-iTR58i3x6Yg6JilSpm6oJ2sZNXL/view?usp=drive_link  
+  
 this project was inspired by a youtube video i watched about the exact same project, and i wanted to see if i could make it from scratch without help  
 the idea is that different types of particles (determined by their colour) apply specific forces to other types  
 the part that makes cool stuff happen is that the forces are asymmetric, which violates one of newtons laws i dont remember which one (the one about equal and opposite forces), so this simulation isnt in any way a representation of real life  
